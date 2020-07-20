@@ -70,6 +70,18 @@ typedef struct lcd_phy_spi_s {
     */
     spi_device_handle_t spi;
 
+    /**
+    * @brief The spi handle.
+    *
+    */
+    bool isInited;
+
+    /**
+    * @brief Host id of spi.
+    *
+    */
+    spi_host_device_t host;
+
 } lcd_phy_spi_t;
 
 /**

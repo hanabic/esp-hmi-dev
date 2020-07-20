@@ -23,9 +23,12 @@ static esp_err_t esp_lcd_phy_spi_init(esp_lcd_phy_t *phy, void *cfg)
     lcd_phy_spi_t *phy_spi = __containerof(phy, lcd_phy_spi_t, parent);
     PHY_CHECK(phy_spi, "phy_spi is null", err);
 
+    PHY_CHECK(phy_spi->isInited == false, "spi has been inited", err);
+
     /* Confirm configs in setting */
     lcd_phy_spi_config_t *spi_cfg = (lcd_phy_spi_config_t *)cfg;
     PHY_CHECK(spi_cfg, "can't set phy config to null", err);
+    phy_spi->host = spi_cfg->host;
 
     /* Init spi bus */
     ret = spi_bus_initialize(spi_cfg->host, &spi_cfg->buscfg, spi_cfg->dma_chan);
@@ -34,6 +37,7 @@ static esp_err_t esp_lcd_phy_spi_init(esp_lcd_phy_t *phy, void *cfg)
     /* Add device to spi bus */
     ret = spi_bus_add_device(spi_cfg->host, &spi_cfg->devcfg, &phy_spi->spi);
     PHY_CHECK(ret == ESP_OK, "add device to spi bus failed", err);
+    phy_spi->isInited = true;
 
     return ESP_OK;
 err:
@@ -48,11 +52,15 @@ static esp_err_t esp_lcd_phy_spi_deinit(esp_lcd_phy_t *phy)
     lcd_phy_spi_t *phy_spi = __containerof(phy, lcd_phy_spi_t, parent);
     PHY_CHECK(phy_spi, "phy_spi is null", err);
 
-    /* Remove devices form spi bus */
-    ret = spi_bus_remove_device(phy_spi->spi);
-    PHY_CHECK(ret == ESP_OK, "remove from to spi bus failed", err);
+    PHY_CHECK(phy_spi->isInited == true, "spi hasn't been inited", err);
+
+    /* Remove devices form spi bus and free bus*/
+    PHY_CHECK(spi_bus_remove_device(phy_spi->spi) == ESP_OK, "remove device from spi bus failed", err);
+    PHY_CHECK(spi_bus_free(phy_spi->host) == ESP_OK, "free bus failed", err);
 
     // TODO: deinit bus settings
+
+    phy_spi->isInited = false;
 
     return ESP_OK;
 
@@ -112,6 +120,7 @@ esp_lcd_phy_t *esp_lcd_phy_spi_factory()
     lcd_phy_spi_t *phy_spi = calloc(1, sizeof(lcd_phy_spi_t));
     PHY_CHECK(phy_spi, "calloc phy_spi failed", err);
 
+    phy_spi->isInited = false;
     phy_spi->parent.type == LCD_PHY_TYPE_SPI;
     phy_spi->parent.base_data_type == DATA_TYPE_UINT8;
     phy_spi->parent.phy_init = esp_lcd_phy_spi_init;
