@@ -67,6 +67,8 @@ esp_lcd_phy_t *esp_lcd_phy_spi_factory(const lcd_phy_spi_config_t *cfg)
 {
     lcd_phy_spi_t *phy_spi = calloc(1, sizeof(lcd_phy_spi_t));
 
+    phy_spi->parent.type == LCD_PHY_TYPE_SPI;
+    phy_spi->parent.base_data_type == DATA_TYPE_UINT8;
     phy_spi->parent.phy_init = esp_lcd_phy_spi_init;
     phy_spi->parent.phy_deinit = esp_lcd_phy_spi_deinit;
     phy_spi->parent.write_cmd = esp_lcd_phy_spi_write_cmd;
