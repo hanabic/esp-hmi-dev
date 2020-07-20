@@ -1,5 +1,6 @@
 #include "esp_err.h"
 #include "esp_lcd_common.h"
+#include "driver/spi_master.h"
 
 typedef enum {
     LCD_PHY_TYPE_SPI = 0,
@@ -7,9 +8,12 @@ typedef enum {
     LCD_PHY_TYPE_RGB8 = 2,
 } esp_lcd_phy_type_t;
 
-
-
-typedef struct esp_lcd_phy_s {
+/**
+* @brief lcd model ,driver will implement methods.
+*
+*/
+typedef struct esp_lcd_phy_s esp_lcd_phy_t;
+struct esp_lcd_phy_s {
     /**
     * @brief Type of lcd driver
     *
@@ -26,37 +30,62 @@ typedef struct esp_lcd_phy_s {
     * @brief Physical driver init
     *
     */
-    esp_err_t(*phy_init)();
+    esp_err_t(*phy_init)(esp_lcd_phy_t *phy, void *conf);
 
     /**
     * @brief Write command interface, will set by different driver
     *
     */
-    esp_err_t(*write_cmd)(esp_lcd_data_t cmd);
+    esp_err_t(*write_cmd)(esp_lcd_phy_t *phy, uint8_t cmd);
 
     /**
     * @brief Write data interface, will set by different driver
     *
     */
-    esp_err_t(*write_data)(esp_lcd_data_t data);
+    esp_err_t(*write_data)(esp_lcd_phy_t *phy, esp_lcd_data_t data);
 
     /**
     * @brief Physical driver deinit
     *
     */
-    esp_err_t(*phy_deinit)();
+    esp_err_t(*phy_deinit)(esp_lcd_phy_t *phy);
 
-} esp_lcd_phy_t;
+};
 
-
+/**
+* @brief The spi driver model.
+*
+*/
 typedef struct lcd_phy_spi_s {
     /**
-    * @brief base lcd_phy_t address will be return after driver init
+    * @brief The lcd_phy_t address will be return after driver init.
+    *        SPI drivers get handle address by parents.
     *
     */
     esp_lcd_phy_t parent;
 
-    //TODO: spi struct functions and members
+    /**
+    * @brief The spi handle.
+    *
+    */
+    spi_device_handle_t spi;
+
 } lcd_phy_spi_t;
 
-esp_lcd_phy_t *esp_lcd_phy_spi_factory();
+/**
+* @brief Config struct for spi driver.
+*
+*/
+typedef struct {
+
+    spi_bus_config_t buscfg;
+
+    spi_device_interface_config_t devcfg;
+
+    spi_host_device_t host;
+
+    int dma_chan;
+
+} lcd_phy_spi_config_t;
+
+esp_lcd_phy_t *esp_lcd_phy_spi_factory(const lcd_phy_spi_config_t *cfg);
