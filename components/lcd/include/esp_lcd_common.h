@@ -6,9 +6,9 @@
 */
 
 typedef enum {
-    BUF_TYPE_UINT8 = 0,
-    BUF_TYPE_UINT16,
-    BUF_TYPE_UINT32
+    DATA_TYPE_UINT8 = 0,
+    DATA_TYPE_UINT16,
+    DATA_TYPE_UINT32
 } data_type_t;
 
 typedef union {
@@ -21,8 +21,8 @@ typedef union {
 * @brief Define lcd buffer, support different type of data;
 *
 */
-typedef struct esp_lcd_data_t {
+typedef struct {
     data_type_t type;
     data_ptr_t buf_ptr;
     int size;
-};
+} esp_lcd_data_t;
