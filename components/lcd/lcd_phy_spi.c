@@ -23,7 +23,7 @@ static esp_err_t esp_lcd_phy_spi_init(esp_lcd_phy_t *phy, void *cfg)
     lcd_phy_spi_t *phy_spi = __containerof(phy, lcd_phy_spi_t, parent);
     PHY_CHECK(phy_spi, "phy_spi is null", err);
 
-    PHY_CHECK(phy_spi->isInited == false, "spi has been inited", err);
+    PHY_CHECK(!phy->isInited, "spi has been inited", err);
 
     /* Confirm configs in setting */
     lcd_phy_spi_config_t *spi_cfg = (lcd_phy_spi_config_t *)cfg;
@@ -37,7 +37,10 @@ static esp_err_t esp_lcd_phy_spi_init(esp_lcd_phy_t *phy, void *cfg)
     /* Add device to spi bus */
     ret = spi_bus_add_device(spi_cfg->host, &spi_cfg->devcfg, &phy_spi->spi);
     PHY_CHECK(ret == ESP_OK, "add device to spi bus failed", err);
-    phy_spi->isInited = true;
+    phy->isInited = true;
+    phy->dc = spi_cfg->dc;
+    phy->rst = spi_cfg->rst;
+    phy->blk = spi_cfg->blk;
 
     return ESP_OK;
 err:
@@ -46,13 +49,11 @@ err:
 
 static esp_err_t esp_lcd_phy_spi_deinit(esp_lcd_phy_t *phy)
 {
-    esp_err_t ret;
-
     /* Get spi driver handle */
     lcd_phy_spi_t *phy_spi = __containerof(phy, lcd_phy_spi_t, parent);
     PHY_CHECK(phy_spi, "phy_spi is null", err);
 
-    PHY_CHECK(phy_spi->isInited == true, "spi hasn't been inited", err);
+    PHY_CHECK(phy->isInited, "spi hasn't been inited", err);
 
     /* Remove devices form spi bus and free bus*/
     PHY_CHECK(spi_bus_remove_device(phy_spi->spi) == ESP_OK, "remove device from spi bus failed", err);
@@ -60,7 +61,7 @@ static esp_err_t esp_lcd_phy_spi_deinit(esp_lcd_phy_t *phy)
 
     // TODO: deinit bus settings
 
-    phy_spi->isInited = false;
+    phy->isInited = false;
 
     return ESP_OK;
 
@@ -89,7 +90,7 @@ err:
     return ESP_FAIL;
 }
 
-static esp_err_t esp_lcd_phy_spi_write_data(esp_lcd_phy_t *phy, esp_lcd_data_t data)
+static esp_err_t esp_lcd_phy_spi_write_data(esp_lcd_phy_t *phy, void *data, data_info_t info)
 {
     /* Get spi driver handle */
     spi_transaction_t t;
@@ -97,13 +98,8 @@ static esp_err_t esp_lcd_phy_spi_write_data(esp_lcd_phy_t *phy, esp_lcd_data_t d
 
     /* Build sppi transmiton struct. dectect data length by configed in data */
     memset(&t, 0, sizeof(t));
-    if (data.type == DATA_TYPE_UINT8) {
-        t.length = data.size * 8;
-        t.tx_buffer = (void *)data.buf_ptr.buf_uint8;
-    } else if (data.type == DATA_TYPE_UINT8) {
-        t.length = data.size * 16;
-        t.tx_buffer = (void *)data.buf_ptr.buf_uint16;
-    }
+    t.length = info.type * info.size;
+    t.tx_buffer = data;
     t.user = (void *)1;
 
     /* For faster speed, transalte by polling */
@@ -120,9 +116,7 @@ esp_lcd_phy_t *esp_lcd_phy_spi_factory()
     lcd_phy_spi_t *phy_spi = calloc(1, sizeof(lcd_phy_spi_t));
     PHY_CHECK(phy_spi, "calloc phy_spi failed", err);
 
-    phy_spi->isInited = false;
-    phy_spi->parent.type == LCD_PHY_TYPE_SPI;
-    phy_spi->parent.base_data_type == DATA_TYPE_UINT8;
+    phy_spi->parent.isInited = false;
     phy_spi->parent.phy_init = esp_lcd_phy_spi_init;
     phy_spi->parent.phy_deinit = esp_lcd_phy_spi_deinit;
     phy_spi->parent.write_cmd = esp_lcd_phy_spi_write_cmd;
