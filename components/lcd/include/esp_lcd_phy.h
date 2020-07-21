@@ -15,6 +15,24 @@ typedef enum {
 typedef struct esp_lcd_phy_s esp_lcd_phy_t;
 struct esp_lcd_phy_s {
     /**
+    * @brief control data/command pin
+    *
+    */
+    int dc;
+
+    /**
+    * @brief reset pin
+    *
+    */
+    int rst;
+
+    /**
+    * @brief backlight pin
+    *
+    */
+    int blk;
+
+    /**
     * @brief Type of lcd driver
     *
     */
@@ -33,6 +51,12 @@ struct esp_lcd_phy_s {
     esp_err_t(*phy_init)(esp_lcd_phy_t *phy, void *conf);
 
     /**
+    * @brief The spi handle.
+    *
+    */
+    bool isInited;
+
+    /**
     * @brief Write command interface, will set by different driver
     *
     */
@@ -42,7 +66,7 @@ struct esp_lcd_phy_s {
     * @brief Write data interface, will set by different driver
     *
     */
-    esp_err_t(*write_data)(esp_lcd_phy_t *phy, esp_lcd_data_t data);
+    esp_err_t(*write_data)(esp_lcd_phy_t *phy, void *data, data_info_t info);
 
     /**
     * @brief Physical driver deinit
@@ -71,12 +95,6 @@ typedef struct lcd_phy_spi_s {
     spi_device_handle_t spi;
 
     /**
-    * @brief The spi handle.
-    *
-    */
-    bool isInited;
-
-    /**
     * @brief Host id of spi.
     *
     */
@@ -98,6 +116,24 @@ typedef struct {
 
     int dma_chan;
 
+    /**
+    * @brief control data/command pin
+    *
+    */
+    int dc;
+
+    /**
+    * @brief reset pin
+    *
+    */
+    int rst;
+
+    /**
+    * @brief backlight pin
+    *
+    */
+    int blk;
+
 } lcd_phy_spi_config_t;
 
-esp_lcd_phy_t *esp_lcd_phy_spi_factory(const lcd_phy_spi_config_t *cfg);
+esp_lcd_phy_t *esp_lcd_phy_spi_factory();
