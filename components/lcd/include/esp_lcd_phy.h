@@ -1,3 +1,4 @@
+#pragma once
 #include "esp_err.h"
 #include "esp_lcd_common.h"
 #include "driver/spi_master.h"
@@ -48,7 +49,7 @@ struct esp_lcd_phy_s {
     * @brief Physical driver init
     *
     */
-    esp_err_t(*phy_init)(esp_lcd_phy_t *phy, void *conf);
+    esp_err_t(*init)(esp_lcd_phy_t *phy, void *conf);
 
     /**
     * @brief The spi handle.
@@ -72,7 +73,7 @@ struct esp_lcd_phy_s {
     * @brief Physical driver deinit
     *
     */
-    esp_err_t(*phy_deinit)(esp_lcd_phy_t *phy);
+    esp_err_t(*deinit)(esp_lcd_phy_t *phy);
 
 };
 
@@ -107,13 +108,28 @@ typedef struct lcd_phy_spi_s {
 *
 */
 typedef struct {
-
+    /**
+    * @brief spi bus config
+    *
+    */
     spi_bus_config_t buscfg;
 
+    /**
+    * @brief spi device config
+    *
+    */
     spi_device_interface_config_t devcfg;
 
+    /**
+    * @brief host of spi HSPI or VSPI
+    *
+    */
     spi_host_device_t host;
 
+    /**
+    * @brief control data/command pin
+    *
+    */
     int dma_chan;
 
     /**
@@ -136,4 +152,19 @@ typedef struct {
 
 } lcd_phy_spi_config_t;
 
+/**
+* @brief Create LCD phy instace fatory
+*
+* @return
+*       - instance: create phy lcd instance successfully
+*       - NULL: create lcd phy instance failed because some error occurred
+*/
 esp_lcd_phy_t *esp_lcd_phy_spi_factory();
+
+/**
+* @brief Load default config for spi
+*
+* @param[out]  config
+*
+*/
+void load_phy_spi_config_default(lcd_phy_spi_config_t *config);
